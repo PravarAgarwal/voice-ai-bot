@@ -1,0 +1,5 @@
+streamlit
+speechrecognition
+edge-tts
+openai
+google-generativeai
