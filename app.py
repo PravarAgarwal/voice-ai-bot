@@ -7,7 +7,7 @@ from tempfile import NamedTemporaryFile
 from audiorecorder import audiorecorder  # NEW 📢
 
 # 🔐 Secrets
-openai_api_key = st.secrets["OPENAI_API_KEY"]
+openai_api_key = st.secrets["OPENAI_API_KEY"]   
 google_api_key = st.secrets["GOOGLE_API_KEY"]
 
 # 🧠 OpenAI setup
