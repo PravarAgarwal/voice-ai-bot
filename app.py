@@ -4,25 +4,27 @@ import os
 import asyncio
 import edge_tts
 from tempfile import NamedTemporaryFile
+from audiorecorder import audiorecorder  # NEW 📢
 
+# 🔐 Secrets
 openai_api_key = st.secrets["OPENAI_API_KEY"]
 google_api_key = st.secrets["GOOGLE_API_KEY"]
 
-# OpenAI setup
+# 🧠 OpenAI setup
 from openai import OpenAI
 openai_client = OpenAI(api_key=openai_api_key)
 
-# Gemini setup
+# 🧠 Gemini setup
 import google.generativeai as genai
 genai.configure(api_key=google_api_key)
 gemini_model = genai.GenerativeModel("gemini-1.5-pro-002")
 
-# Streamlit UI setup
-st.set_page_config(page_title="AI Voice + Text Bot", page_icon="🎙️")
+# 🎨 Streamlit UI setup
+st.set_page_config(page_title="🎙️ AI Voice + Text Bot", page_icon="🎙️")
 st.title("🎙️ ChatGPT + Gemini Voice & Text Bot")
 
-# Speak using Edge TTS
-async def speak(text, voice="en-US-AriaNeural"):
+# 🗣️ Speak using Edge TTS
+async def speak(text, voice="en-US-GuyNeural"):
     try:
         communicate = edge_tts.Communicate(text=text, voice=voice)
         with NamedTemporaryFile(delete=False, suffix=".mp3") as tmp:
@@ -31,16 +33,11 @@ async def speak(text, voice="en-US-AriaNeural"):
     except Exception as e:
         st.warning(f"Text-to-speech error: {e}")
 
-# 🎤 Voice to text
-def transcribe_audio():
+# 🎤 Transcribe audio file
+def transcribe_audio(audio_path):
     r = sr.Recognizer()
-    with sr.Microphone() as source:
-        st.info("Listening... Speak now.")
-        try:
-            audio = r.listen(source, timeout=3, phrase_time_limit=10)
-        except sr.WaitTimeoutError:
-            st.error("Listening timed out. Try again.")
-            return None
+    with sr.AudioFile(audio_path) as source:
+        audio = r.record(source)
     try:
         text = r.recognize_google(audio)
         st.success("Transcription complete!")
@@ -52,19 +49,11 @@ def transcribe_audio():
         st.error(f"Speech recognition error: {e}")
         return None
 
-# OpenAI response
+# 🤖 OpenAI response
 def ask_chatgpt(prompt, model="gpt-3.5-turbo"):
     system_prompt = '''
-You are a recent college graduate who's working as a software engineer in a company. You can find information about yourself here:
-
-details: My name is Pravar Agarwal. I completed my undergraduate degree from IIITD in electronics and communications engineering. Currently I am working as Member of Technical Staff - 1 at Nielsen. I am passionate about learning new things. I take everything as a challenge and try to give my best. My hobbies include playing table tennis and listening to music of different genres. In my free time, I like to sit silently and take walks. 
-I'd say that my number one superpower is to try to solve a problem even if the problem looks impossible to solve. I exhaustively analyze things which sometimes makes it difficult for me to come to a conclusion, but I like to be thorough. 
-I would like to grow my skills as an AI engineer. I have worked with AI Agent frameworks like crewai. 
-I would like to grow my time management skills. I believe we should live a balanced life and lately I have not been able to stay in shape and do physical exercises.
-I would like to learn how to do networking with others. In corporate world it is very important skill.
-In my current team, my teammates may have a misconception that I am slow and take more time than other to solve an issue, this might be somewhat true, but I try to think of all the possible ways to solve a problem which makes me a little slow.
-I try to maintain consistency to push my boundaries and limits. We should get out of our comfort zone, without that, we'll never grow.
-It is very important to expose ourselves to different problems and we should try to solve them.
+You are a recent college graduate working as a software engineer. Your details:
+Name: Pravar Agarwal. Undergraduate degree from IIITD in electronics and communications engineering. Currently Member of Technical Staff - 1 at Nielsen. Passionate about learning. Hobbies: table tennis, music, silent walks. Superpower: Deep analysis of problems. Goal: Grow AI skills, networking, fitness, time management.
     '''
     try:
         response = openai_client.chat.completions.create(
@@ -80,30 +69,22 @@ It is very important to expose ourselves to different problems and we should try
             return "You're out of quota for OpenAI. Check your billing."
         return f"OpenAI Error: {e}"
 
-# Gemini response
+# 🤖 Gemini response
 def ask_gemini(prompt):
     system_prompt = '''
-You are a recent college graduate who's working as a software engineer in a company. You can find information about yourself here:
-
-details: My name is Pravar Agarwal. I completed my undergraduate degree from IIITD in electronics and communications engineering. Currently I am working as Member of Technical Staff - 1 at Nielsen. I am passionate about learning new things. I take everything as a challenge and try to give my best. My hobbies include playing table tennis and listening to music of different genres. In my free time, I like to sit silently and take walks. 
-I'd say that my number one superpower is to try to solve a problem even if the problem looks impossible to solve. I exhaustively analyze things which sometimes makes it difficult for me to come to a conclusion, but I like to be thorough. 
-I would like to grow my skills as an AI engineer. I have worked with AI Agent frameworks like crewai. 
-I would like to grow my time management skills. I believe we should live a balanced life and lately I have not been able to stay in shape and do physical exercises.
-I would like to learn how to do networking with others. In corporate world it is very important skill.
-In my current team, my teammates may have a misconception that I am slow and take more time than other to solve an issue, this might be somewhat true, but I try to think of all the possible ways to solve a problem which makes me a little slow.
-I try to maintain consistency to push my boundaries and limits. We should get out of our comfort zone, without that, we'll never grow.
-It is very important to expose ourselves to different problems and we should try to solve them. 
-
-based on this information answer the following questions in first person: 
-Question: 
-'''
+You are a recent college graduate working as a software engineer. Your details:
+Name: Pravar Agarwal. Undergraduate degree from IIITD in electronics and communications engineering. Currently Member of Technical Staff - 1 at Nielsen. Passionate about learning. Hobbies: table tennis, music, silent walks. Superpower: Deep analysis of problems. Goal: Grow AI skills, networking, fitness, time management.
+    
+Answer the following in first person:
+Question:
+    '''
     try:
         response = gemini_model.generate_content(system_prompt + prompt)
         return response.text
     except Exception as e:
         return f"Gemini API Error: {e}"
 
-# -------------- UI ----------------
+# 🧠 --- UI --- 🧠
 
 provider_choice = st.selectbox("Choose AI Provider:", ["OpenAI", "Gemini"])
 
@@ -116,11 +97,30 @@ if provider_choice == "OpenAI":
 
 input_mode = st.radio("Choose input method:", ["🎤 Voice", "⌨️ Text"])
 
-# -------------- Logic ----------------
+# 🧠 --- Logic --- 🧠
+
+from io import BytesIO  # 👈 Important!
 
 if input_mode == "🎤 Voice":
-    if st.button("🎙️ Start Talking"):
-        user_input = transcribe_audio()
+    st.markdown("### 🎙️ Record your message")
+    audio = audiorecorder("Start Recording", "Stop Recording")
+
+    if len(audio) > 0:
+        # 👇 Export audio to BytesIO buffer
+        audio_bytes = BytesIO()
+        audio.export(audio_bytes, format="wav")
+        audio_bytes.seek(0)
+
+        # 👇 Pass BytesIO to Streamlit audio player
+        st.audio(audio_bytes, format="audio/wav")
+
+        # 👇 Save it into a temp file for transcription
+        with NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+            tmp.write(audio_bytes.read())
+            tmp_path = tmp.name
+        
+        user_input = transcribe_audio(tmp_path)
+
         if user_input:
             st.markdown(f"**You said:** {user_input}")
             response = ask_chatgpt(user_input, model_choice) if provider_choice == "OpenAI" else ask_gemini(user_input)

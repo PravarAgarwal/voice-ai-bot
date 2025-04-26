@@ -1,5 +1,7 @@
 streamlit
-speechrecognition
-edge-tts
 openai
 google-generativeai
+edge-tts
+pydub
+streamlit-audiorecorder
+speechrecognition
