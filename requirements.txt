@@ -1,7 +1,6 @@
 streamlit
-openai
-google-generativeai
-edge-tts
+google-genai>=2.30.1
 pydub
 streamlit-audiorecorder
 speechrecognition
+gTTS
